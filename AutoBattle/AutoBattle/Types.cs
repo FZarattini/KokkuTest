@@ -22,13 +22,15 @@ namespace AutoBattle
             public int yIndex;
             public bool ocupied;
             public int Index;
+            public char occupyingCharacter;
 
-            public GridBox(int x, int y, bool ocupied, int index)
+            public GridBox(int x, int y, bool ocupied, int index, char occupyingCharacter)
             {
                 xIndex = x;
                 yIndex = y;
                 this.ocupied = ocupied;
                 this.Index = index;
+                this.occupyingCharacter = occupyingCharacter;
             }
 
         }
