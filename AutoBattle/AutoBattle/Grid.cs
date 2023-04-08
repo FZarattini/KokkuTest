@@ -29,21 +29,21 @@ namespace AutoBattle
         }
 
         // prints the matrix that indicates the tiles of the battlefield
-        //public void drawBattlefield(int Lines, int Columns)
         public void drawBattlefield()
         {
-            for (int i = 0; i < xLength; i++)
+            for(int i = 0; i < yLength; i++)
             {
-                for (int j = 0; j < yLength; j++)
+                for(int j = 0; j < xLength; j++)
                 {
-                    GridBox currentgrid = grids[i * yLength + j];
-                    if (currentgrid.ocupied)
+                    GridBox currentBox = grids[(i * xLength) + j];
+
+                    if (currentBox.ocupied)
                     {
-                        //if()
-                        Console.Write($"[{currentgrid.occupyingCharacter}]\t");
+                        Console.Write($"[{currentBox.occupyingCharacter}]\t");
                     }
                     else
                     {
+                        //Console.Write($"[{currentBox.yIndex} {currentBox.xIndex}]\t");
                         Console.Write($"[ ]\t");
                     }
                 }
@@ -51,6 +51,5 @@ namespace AutoBattle
             }
             Console.Write(Environment.NewLine + Environment.NewLine);
         }
-
     }
 }
