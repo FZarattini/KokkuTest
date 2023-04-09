@@ -16,6 +16,11 @@ namespace AutoBattle
             return index;
         }
 
+        public static float GetRandomFloat(float min, float max)
+        {
+            return (float)(min + (max - min) * rng.NextDouble());
+        }
+
         // Validates a string given a pattern
         public Match ValidateString(string toValidate, string pattern)
         {

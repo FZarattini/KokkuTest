@@ -10,34 +10,46 @@ namespace AutoBattle
     {
         public string Name { get; set; }
         public string Title;
+        public bool Invulnerable = false;
         public float Health;
         public float BaseDamage;
         public float DamageMultiplier { get; set; }
         public GridBox currentBox;
         public int PlayerIndex;
         public CharacterClass characterClass;
-        public CharacterClassSpecific classData;
+        public SpecialAbility SpecialAbility;
         public Character Target { get; set; }
+
+        public delegate void OnCharacterDied();
+        public static OnCharacterDied onCharacterDied;
+
         public Character(CharacterClass characterClass)
         {
             this.characterClass = characterClass;
-        }
-
-
-        public void TakeDamage(float amount)
-        {
-            Health -= amount;
-
-            if (Health <= 0)
-            {
-                Console.WriteLine($"{characterClass} died!");
-            }
+            this.SpecialAbility = new SpecialAbility(characterClass);
         }
 
         public void StartTurn(Grid battlefield)
         {
+            // Archer special ability allows for attacks anywhere, so must be rolled before everything else
+            if(characterClass == CharacterClass.Archer)
+            {
+                bool success = TrySpecialAbility();
+
+                if (success)
+                    return;
+            }
+
+            CheckSpecialAbilityStatus();
+
             if (CheckCloseTargets(battlefield))
             {
+                bool success = TrySpecialAbility();
+
+                if (success)
+                    return;
+
+                // if special ability doesn't happen, then attack as usual
                 Attack(Target);
             }
             else
@@ -47,6 +59,29 @@ namespace AutoBattle
             }
         }
 
+        // Check in x and y directions if there is any character close enough to be a target.
+        // Modified to detect characters in diagonal directions and to check positions based on x and y indexes instead of the index of the box. More reliable this way
+        bool CheckCloseTargets(Grid battlefield)
+        {
+            bool west = battlefield.grids.Find(x => x.xIndex == currentBox.xIndex - 1 && x.yIndex == currentBox.yIndex).ocupied;
+            bool east = battlefield.grids.Find(x => x.xIndex == currentBox.xIndex + 1 && x.yIndex == currentBox.yIndex).ocupied;
+            bool north = battlefield.grids.Find(x => x.yIndex == currentBox.yIndex + 1 && x.xIndex == currentBox.xIndex).ocupied;
+            bool south = battlefield.grids.Find(x => x.yIndex == currentBox.yIndex - 1 && x.xIndex == currentBox.xIndex).ocupied;
+            bool northWest = battlefield.grids.Find(x => x.xIndex == currentBox.xIndex - 1 && x.yIndex == currentBox.yIndex - 1).ocupied;
+            bool northEast = battlefield.grids.Find(x => x.xIndex == currentBox.xIndex + 1 && x.yIndex == currentBox.yIndex - 1).ocupied;
+            bool southWest = battlefield.grids.Find(x => x.xIndex == currentBox.xIndex - 1 && x.yIndex == currentBox.yIndex + 1).ocupied;
+            bool southEast = battlefield.grids.Find(x => x.xIndex == currentBox.xIndex + 1 && x.yIndex == currentBox.yIndex + 1).ocupied;
+
+            if (west || east || north || south || northWest || northEast || southWest || southEast)
+            {
+                return true;
+            }
+            return false;
+        }
+
+        #region Movement Methods
+
+        // This method allows for diagonal movement
         void HandleMovement(Grid battlefield)
         {
             bool up = false;
@@ -163,20 +198,10 @@ namespace AutoBattle
             }
         }
 
-        // Check in x and y directions if there is any character close enough to be a target.
-        bool CheckCloseTargets(Grid battlefield)
-        {
-            bool left = (battlefield.grids.Find(x => x.Index == currentBox.Index - 1).ocupied);
-            bool right = (battlefield.grids.Find(x => x.Index == currentBox.Index + 1).ocupied);
-            bool up = (battlefield.grids.Find(x => x.Index == currentBox.Index + battlefield.xLength).ocupied);
-            bool down = (battlefield.grids.Find(x => x.Index == currentBox.Index - battlefield.xLength).ocupied);
+        #endregion Movement Methods
 
-            if (left || right || up || down)
-            {
-                return true;
-            }
-            return false;
-        }
+
+        #region Combat Methods
 
         public void Attack(Character target)
         {
@@ -185,5 +210,81 @@ namespace AutoBattle
             target.TakeDamage(realDamage);
             Console.WriteLine($"Player {characterClass} is attacking the player {Target.characterClass} and did {realDamage} damage\n");
         }
+
+        // Checks abilities with set amount of turns to end and resets them if needed
+        void CheckSpecialAbilityStatus()
+        {
+            if (characterClass == CharacterClass.Cleric)
+            {
+                if(Invulnerable && SpecialAbility.turnsCountDown <= 0)
+                {
+                    Invulnerable = false;
+                }
+            }
+        }
+
+        // Character takes damage if they are not invulnerable
+        public void TakeDamage(float amount)
+        {
+            if (Invulnerable)
+            {
+                Console.WriteLine($"{characterClass} took 0 damage because they are invulnerable!");
+                return;
+            }
+
+            Health -= amount;
+
+            if (Health <= 0)
+            {
+                Console.WriteLine($"{characterClass} died!");
+                onCharacterDied?.Invoke();
+            }
+        }
+
+        // Rolls a random chance to execute a special ability based on the own ability's odds of happening
+        bool TrySpecialAbility()
+        {
+            float rolled = Utilities.GetRandomFloat(0f, 1f);
+
+            if(rolled <= SpecialAbility.odds)
+            {
+                ExecuteSpecialAbility();
+                return true;
+            }
+            return false;
+        }
+
+        // Executes the class special ability;
+        void ExecuteSpecialAbility()
+        {
+            switch (characterClass)
+            {
+                case CharacterClass.Paladin: // increases paladins' health
+                    Console.WriteLine($"{characterClass} uses {SpecialAbility.abilityName}. They gain a boost of health now they have {Health}HP!");
+                    Health *= SpecialAbility.hpModifier;
+                    break;
+                case CharacterClass.Warrior: // attacks twice with more damage
+                    Console.WriteLine($"{characterClass} uses {SpecialAbility.abilityName}.They grow stronger and attacks twice!");
+                    float originalBaseDamage = BaseDamage;
+                    BaseDamage *= SpecialAbility.damageModifier;
+                    Attack(Target);
+                    Attack(Target);
+                    BaseDamage = originalBaseDamage;
+                    break;
+                case CharacterClass.Cleric: // turns invulnerable for a set amount of turns
+                    if (Invulnerable) break;
+                    Console.WriteLine($"{characterClass} uses {SpecialAbility.abilityName}. They become invulnerable for {SpecialAbility.turnsActive} turns!");
+                    Invulnerable = true;
+                    SpecialAbility.turnsCountDown = SpecialAbility.turnsActive;
+                    break;
+                case CharacterClass.Archer: // attack anywhere
+                    Console.WriteLine($"{characterClass} uses {SpecialAbility.abilityName}. They attack from a distance!");
+                    Attack(Target);
+                    break;
+                default:
+                    break;
+            }
+        }
+        #endregion Combat Methods
     }
 }

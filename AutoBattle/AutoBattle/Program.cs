@@ -19,15 +19,16 @@ namespace AutoBattle
             GridBox EnemyCurrentLocation;
             Character PlayerCharacter;
             Character EnemyCharacter;
-            List<Character> AllPlayers = new List<Character>();
+            List<Character> AllPlayers;
             Utilities utilities = new Utilities();
             int currentTurn = 0;
             int numberOfPossibleTiles = 0;
-            Setup(); 
+            Setup();
 
 
             void Setup()
             {
+                AllPlayers = new List<Character>();
                 GetBattlefieldSize();
             }
 
@@ -99,6 +100,8 @@ namespace AutoBattle
 
                 CreateEnemyCharacter();
 
+                // Assigns the method that handles the end of the game to the event of a character dying
+                Character.onCharacterDied += HandleEndGame;
                 StartGame();
             }
 
@@ -112,7 +115,7 @@ namespace AutoBattle
                 PlayerCharacter.Health = 100;
                 PlayerCharacter.BaseDamage = 20;
                 PlayerCharacter.PlayerIndex = 0;
-                
+
 
             }
 
@@ -141,14 +144,15 @@ namespace AutoBattle
 
             }
 
-            void StartTurn(){
+            void StartTurn()
+            {
 
                 if (currentTurn == 0)
                 {
                     ShufflePlayerList(AllPlayers); // Swapped sorted list for shuffled list for more dynamism
                 }
 
-                foreach(Character character in AllPlayers)
+                foreach (Character character in AllPlayers)
                 {
                     character.StartTurn(grid);
                 }
@@ -165,27 +169,34 @@ namespace AutoBattle
 
             void HandleTurn()
             {
+
+                Console.Write(Environment.NewLine + Environment.NewLine);
+                Console.WriteLine("Click on any key to start the next turn...\n");
+                Console.Write(Environment.NewLine + Environment.NewLine);
+
+                ConsoleKeyInfo key = Console.ReadKey();
+                StartTurn();
+            }
+
+            // Handles the end of the game
+            void HandleEndGame()
+            {
+                Character.onCharacterDied -= HandleEndGame;
+
                 // Enemy Wins
-                if(PlayerCharacter.Health <= 0)
+                if (PlayerCharacter.Health <= 0)
                 {
                     Console.Write(Environment.NewLine + Environment.NewLine);
                     Console.Write("Game Over!\nYou Lose!\n");
                     CheckRestart();
 
-                } else if (EnemyCharacter.Health <= 0) // Player Wins
+                }
+                else if (EnemyCharacter.Health <= 0) // Player Wins
                 {
                     Console.Write(Environment.NewLine + Environment.NewLine);
                     Console.Write("YOU WIN!\n");
 
                     CheckRestart();
-                } else
-                {
-                    Console.Write(Environment.NewLine + Environment.NewLine);
-                    Console.WriteLine("Click on any key to start the next turn...\n");
-                    Console.Write(Environment.NewLine + Environment.NewLine);
-
-                    ConsoleKeyInfo key = Console.ReadKey();
-                    StartTurn();
                 }
             }
 
@@ -212,7 +223,8 @@ namespace AutoBattle
                 }
             }
 
-            void ResetValues(){
+            void ResetValues()
+            {
                 currentTurn = 0;
                 numberOfPossibleTiles = 0;
             }
@@ -237,7 +249,8 @@ namespace AutoBattle
                     grid.grids[random] = RandomLocation;
                     //PlayerCharacter.currentBox = grid.grids[random];
                     PlayerCharacter.currentBox = RandomLocation;
-                } else
+                }
+                else
                 {
                     AlocatePlayerCharacter();
                 }
@@ -263,7 +276,7 @@ namespace AutoBattle
                 else
                 {
                     AlocateEnemyCharacter();
-                }  
+                }
             }
         }
     }

@@ -6,22 +6,6 @@ namespace AutoBattle
 {
     public class Types
     {
-        public struct CharacterClassSpecific
-        {
-            float hpModifier;
-            float ClassDamage; 
-            CharacterClass characterClass;
-            CharacterSkill skill;
-
-            public CharacterClassSpecific(float hp, float damage, CharacterClass characterClass, CharacterSkill skill)
-            {
-                this.hpModifier = hp;
-                this.ClassDamage = damage;
-                this.characterClass = characterClass;
-                this.skill = skill;
-            }
-        }
-
         public struct GridBox
         {
             public int xIndex;
@@ -41,11 +25,67 @@ namespace AutoBattle
 
         }
 
-        public struct CharacterSkill
+        public struct SpecialAbility
         {
-            string Name;
-            float damage;
-            float damageMultiplier;
+            public string abilityName;
+            public CharacterClass characterClass;
+            public float hpModifier;
+            public float damageModifier;
+            public int turnsActive; // Doesn't revert if the value is 0
+            public int turnsCountDown;
+            public float odds;
+
+            public SpecialAbility(CharacterClass characterClass) 
+            { 
+                switch (characterClass)
+                {
+                    case CharacterClass.Paladin: // Increases the character HP by 20% everytime it activates
+                        this.characterClass = characterClass;
+                        this.abilityName = "Endure";
+                        this.hpModifier = 1.2f;
+                        this.damageModifier = 1f;
+                        turnsActive = 0;
+                        turnsCountDown = 0;
+                        odds = 0.2f;
+                        break;
+                    case CharacterClass.Warrior: // Hits twice with 20% more damage
+                        this.characterClass = characterClass;
+                        this.abilityName = "Berserker Strike";
+                        this.hpModifier = 1f;
+                        this.damageModifier = 1.2f;
+                        turnsActive = 1;
+                        turnsCountDown = 0;
+                        odds = 0.25f;
+                        break;
+                    case CharacterClass.Cleric: // Character doesn't take any damage for 2 turns;
+                        this.characterClass = characterClass;
+                        this.abilityName = "Holy";
+                        this.hpModifier = 1f;
+                        this.damageModifier = 1f;
+                        turnsActive = 2;
+                        turnsCountDown = 0;
+                        odds = 0.10f;
+                        break;
+                    case CharacterClass.Archer: // Hits target anywhere on the battlefield;
+                        this.characterClass = characterClass;
+                        this.abilityName = "Long Shot";
+                        this.hpModifier = 1f;
+                        this.damageModifier = 1f;
+                        this.turnsActive = 1;
+                        turnsCountDown = 0;
+                        odds = 0.40f;
+                        break;
+                    default:
+                        this.characterClass = characterClass;
+                        this.abilityName = "";
+                        this.hpModifier = 1f;
+                        this.damageModifier = 1f;
+                        this.turnsActive = 0;
+                        turnsCountDown = 0;
+                        odds = 0f;
+                        break;
+                }
+            }
         }
 
         public enum CharacterClass : uint
