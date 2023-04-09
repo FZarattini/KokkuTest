@@ -6,14 +6,20 @@ namespace AutoBattle
 {
     public class Types
     {
-
         public struct CharacterClassSpecific
         {
-            CharacterClass CharacterClass;
             float hpModifier;
-            float ClassDamage;
-            CharacterSkills[] skills;
+            float ClassDamage; 
+            CharacterClass characterClass;
+            CharacterSkill skill;
 
+            public CharacterClassSpecific(float hp, float damage, CharacterClass characterClass, CharacterSkill skill)
+            {
+                this.hpModifier = hp;
+                this.ClassDamage = damage;
+                this.characterClass = characterClass;
+                this.skill = skill;
+            }
         }
 
         public struct GridBox
@@ -22,7 +28,7 @@ namespace AutoBattle
             public int yIndex;
             public bool ocupied;
             public int Index;
-            public char occupyingCharacter;
+            public char occupyingCharacter; // The first letter of the character class to represent him
 
             public GridBox(int x, int y, bool ocupied, int index, char occupyingCharacter)
             {
@@ -35,7 +41,7 @@ namespace AutoBattle
 
         }
 
-        public struct CharacterSkills
+        public struct CharacterSkill
         {
             string Name;
             float damage;

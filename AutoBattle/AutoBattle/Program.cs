@@ -96,12 +96,15 @@ namespace AutoBattle
                         GetPlayerChoice();
                         break;
                 }
+
+                CreateEnemyCharacter();
+
+                StartGame();
             }
 
 
             void CreatePlayerCharacter(int classIndex)
             {
-               
                 CharacterClass characterClass = (CharacterClass)classIndex;
                 Console.WriteLine($"Player Class Choice: {characterClass}");
                 PlayerCharacter = new Character(characterClass);
@@ -110,7 +113,6 @@ namespace AutoBattle
                 PlayerCharacter.BaseDamage = 20;
                 PlayerCharacter.PlayerIndex = 0;
                 
-                CreateEnemyCharacter();
 
             }
 
@@ -125,8 +127,6 @@ namespace AutoBattle
                 EnemyCharacter.Health = 100;
                 EnemyCharacter.BaseDamage = 20;
                 EnemyCharacter.PlayerIndex = 1;
-                StartGame();
-
             }
 
             void StartGame()

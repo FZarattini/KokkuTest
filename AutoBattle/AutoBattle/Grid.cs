@@ -39,6 +39,7 @@ namespace AutoBattle
 
                     if (currentBox.ocupied)
                     {
+                        // Uses the first letter os the characters class to represent him in the board
                         Console.Write($"[{currentBox.occupyingCharacter}]\t");
                     }
                     else
