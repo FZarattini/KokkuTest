@@ -25,6 +25,7 @@ namespace AutoBattle
 
         }
 
+        // Struct describing the special abilities of the character classes
         public struct SpecialAbility
         {
             public string abilityName;
@@ -35,6 +36,7 @@ namespace AutoBattle
             public int turnsCountDown;
             public float odds;
 
+            // creates the special ability data based on the character class
             public SpecialAbility(CharacterClass characterClass) 
             { 
                 switch (characterClass)
@@ -53,7 +55,7 @@ namespace AutoBattle
                         this.abilityName = "Berserker Strike";
                         this.hpModifier = 1f;
                         this.damageModifier = 1.2f;
-                        turnsActive = 1;
+                        turnsActive = 0;
                         turnsCountDown = 0;
                         odds = 0.25f;
                         break;
@@ -71,7 +73,7 @@ namespace AutoBattle
                         this.abilityName = "Long Shot";
                         this.hpModifier = 1f;
                         this.damageModifier = 1f;
-                        this.turnsActive = 1;
+                        this.turnsActive = 0;
                         turnsCountDown = 0;
                         odds = 0.40f;
                         break;

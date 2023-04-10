@@ -178,7 +178,7 @@ namespace AutoBattle
                 StartTurn();
             }
 
-            // Handles the end of the game
+            // Handles the end of the game, triggered by a character dying. Character.onCharacterDied event assigned method
             void HandleEndGame()
             {
                 Character.onCharacterDied -= HandleEndGame;
@@ -229,6 +229,7 @@ namespace AutoBattle
                 numberOfPossibleTiles = 0;
             }
 
+            // Positioned AlocateEnemyCharacter's call here instead of inside AlocatePlayerCharacter
             void AlocatePlayers()
             {
                 AlocatePlayerCharacter();

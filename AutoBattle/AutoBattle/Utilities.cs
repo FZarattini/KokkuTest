@@ -16,6 +16,7 @@ namespace AutoBattle
             return index;
         }
 
+        // Returns a random float in a range
         public static float GetRandomFloat(float min, float max)
         {
             return (float)(min + (max - min) * rng.NextDouble());

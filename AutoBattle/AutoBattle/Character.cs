@@ -9,7 +9,7 @@ namespace AutoBattle
     public class Character
     {
         public string Name { get; set; }
-        public string Title;
+        public string Title; // Added a Title to differentiate between Player and Enemy in the text log
         public bool Invulnerable = false;
         public float Health;
         public float BaseDamage;
@@ -17,9 +17,10 @@ namespace AutoBattle
         public GridBox currentBox;
         public int PlayerIndex;
         public CharacterClass characterClass;
-        public SpecialAbility SpecialAbility;
+        public SpecialAbility SpecialAbility; // Added a special ability to the character
         public Character Target { get; set; }
 
+        // Event triggered whenever the character dies
         public delegate void OnCharacterDied();
         public static OnCharacterDied onCharacterDied;
 
@@ -32,7 +33,7 @@ namespace AutoBattle
         public void StartTurn(Grid battlefield)
         {
             // Archer special ability allows for attacks anywhere, so must be rolled before everything else
-            if(characterClass == CharacterClass.Archer)
+            if (characterClass == CharacterClass.Archer)
             {
                 bool success = TrySpecialAbility();
 
@@ -40,7 +41,7 @@ namespace AutoBattle
                     return;
             }
 
-            CheckSpecialAbilityStatus();
+            CheckSpecialAbilityStatus(); // Make sure there isn't a timed ability that needs to reset
 
             if (CheckCloseTargets(battlefield))
             {
@@ -81,7 +82,7 @@ namespace AutoBattle
 
         #region Movement Methods
 
-        // This method allows for diagonal movement
+        // Modified this method to allow for diagonal movement
         void HandleMovement(Grid battlefield)
         {
             bool up = false;
@@ -140,7 +141,7 @@ namespace AutoBattle
             DisplayDirection(up, down, left, right);
             battlefield.drawBattlefield();
         }
-    
+
         // Displays the direction the character walked as a cardinal direction
         void DisplayDirection(bool up, bool down, bool left, bool right)
         {
@@ -207,8 +208,8 @@ namespace AutoBattle
         {
             // Logging the correct amount of damage taken by target
             int realDamage = Utilities.GetRandomInt(0, (int)BaseDamage);
+            Console.WriteLine($"{Title} {characterClass} is attacking the {Target.Title} {Target.characterClass} and did {realDamage} damage\n");
             target.TakeDamage(realDamage);
-            Console.WriteLine($"Player {characterClass} is attacking the player {Target.characterClass} and did {realDamage} damage\n");
         }
 
         // Checks abilities with set amount of turns to end and resets them if needed
@@ -216,9 +217,17 @@ namespace AutoBattle
         {
             if (characterClass == CharacterClass.Cleric)
             {
-                if(Invulnerable && SpecialAbility.turnsCountDown <= 0)
+                if (Invulnerable)
                 {
-                    Invulnerable = false;
+                    if (SpecialAbility.turnsCountDown <= 0) // Resets ability
+                    {
+                        Invulnerable = false;
+                    }
+                    else
+                    {
+                        SpecialAbility.turnsCountDown--; // Count down the turn
+                    }
+
                 }
             }
         }
@@ -246,7 +255,7 @@ namespace AutoBattle
         {
             float rolled = Utilities.GetRandomFloat(0f, 1f);
 
-            if(rolled <= SpecialAbility.odds)
+            if (rolled <= SpecialAbility.odds)
             {
                 ExecuteSpecialAbility();
                 return true;
