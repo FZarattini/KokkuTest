@@ -22,7 +22,14 @@ namespace AutoBattle
                 this.Index = index;
                 this.occupyingCharacter = occupyingCharacter;
             }
+        }
 
+        public struct CharacterClassSpecific
+        {
+            public CharacterClass characterClass;
+            public float hpModifier;
+            public float damageModifier;
+            public SpecialAbility specialAbility;
         }
 
         // Struct describing the special abilities of the character classes

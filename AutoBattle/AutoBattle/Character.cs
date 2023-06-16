@@ -11,27 +11,34 @@ namespace AutoBattle
         public string Name { get; set; }
         public string Title; // Added a Title to differentiate between Player and Enemy in the text log
         public bool Invulnerable = false;
-        public float Health;
-        public float BaseDamage;
-        public float DamageMultiplier { get; set; }
+        public int Health;
+        public int Damage;
+
         public GridBox currentBox;
         public int PlayerIndex;
         public CharacterClass characterClass;
-        public SpecialAbility SpecialAbility; // Added a special ability to the character
+        public CharacterClassSpecific characterClassSpecific;
         public Character Target { get; set; }
+        public SpecialAbility specialAbility;
 
         // Event triggered whenever the character dies
         public delegate void OnCharacterDied();
         public static OnCharacterDied onCharacterDied;
 
-        public Character(CharacterClass characterClass)
+        public Character(CharacterClass characterClass, string title, int baseHealth, int baseDamage, CharacterClassSpecific characterClassSpecific)
         {
             this.characterClass = characterClass;
-            this.SpecialAbility = new SpecialAbility(characterClass);
+            this.Title = title;
+            this.Health = (int) (baseHealth * characterClassSpecific.hpModifier);
+            this.Damage = (int) (baseDamage * characterClassSpecific.damageModifier);
+            this.characterClassSpecific = characterClassSpecific;
+            specialAbility = characterClassSpecific.specialAbility;
         }
 
         public void StartTurn(Grid battlefield)
         {
+            //DisplayCharacterStats();
+            
             // Archer special ability allows for attacks anywhere, so must be rolled before everything else
             if (characterClass == CharacterClass.Archer)
             {
@@ -57,7 +64,14 @@ namespace AutoBattle
             {
                 // if there is no target close enough, calculates in wich direction this character should move to be closer to a possible target
                 HandleMovement(battlefield);
+                battlefield.drawBattlefield();
             }
+        }
+
+        // Shows how much health the character has at the beginning of round
+        public void DisplayCharacterStats()
+        {
+            Console.WriteLine($"{Title} {characterClass} has {Health} HP!");
         }
 
         // Check in x and y directions if there is any character close enough to be a target.
@@ -73,11 +87,8 @@ namespace AutoBattle
             bool southWest = battlefield.grids.Find(x => x.xIndex == currentBox.xIndex - 1 && x.yIndex == currentBox.yIndex + 1).ocupied;
             bool southEast = battlefield.grids.Find(x => x.xIndex == currentBox.xIndex + 1 && x.yIndex == currentBox.yIndex + 1).ocupied;
 
-            if (west || east || north || south || northWest || northEast || southWest || southEast)
-            {
-                return true;
-            }
-            return false;
+            return west || east || north || south || northWest || northEast || southWest || southEast;
+ 
         }
 
         #region Movement Methods
@@ -91,6 +102,8 @@ namespace AutoBattle
             bool right = false;
 
             // Decides where the character must go based on the target's relative position
+            // Maintained linq even at cost of performance for legibility. Swap for loop if performance issues arise
+
             if (currentBox.xIndex > Target.currentBox.xIndex)
             {
                 currentBox.ocupied = false;
@@ -139,7 +152,6 @@ namespace AutoBattle
             }
 
             DisplayDirection(up, down, left, right);
-            battlefield.drawBattlefield();
         }
 
         // Displays the direction the character walked as a cardinal direction
@@ -207,7 +219,7 @@ namespace AutoBattle
         public void Attack(Character target)
         {
             // Logging the correct amount of damage taken by target
-            int realDamage = Utilities.GetRandomInt(0, (int)BaseDamage);
+            int realDamage = Utilities.GetRandomInt(0, (int)Damage);
             Console.WriteLine($"{Title} {characterClass} is attacking the {Target.Title} {Target.characterClass} and did {realDamage} damage\n");
             target.TakeDamage(realDamage);
         }
@@ -219,13 +231,13 @@ namespace AutoBattle
             {
                 if (Invulnerable)
                 {
-                    if (SpecialAbility.turnsCountDown <= 0) // Resets ability
+                    if (specialAbility.turnsCountDown <= 0) // Resets ability
                     {
                         Invulnerable = false;
                     }
                     else
                     {
-                        SpecialAbility.turnsCountDown--; // Count down the turn
+                        specialAbility.turnsCountDown--; // Count down the turn
                     }
 
                 }
@@ -233,7 +245,7 @@ namespace AutoBattle
         }
 
         // Character takes damage if they are not invulnerable
-        public void TakeDamage(float amount)
+        public void TakeDamage(int amount)
         {
             if (Invulnerable)
             {
@@ -255,7 +267,7 @@ namespace AutoBattle
         {
             float rolled = Utilities.GetRandomFloat(0f, 1f);
 
-            if (rolled <= SpecialAbility.odds)
+            if (rolled <= specialAbility.odds)
             {
                 ExecuteSpecialAbility();
                 return true;
@@ -269,25 +281,25 @@ namespace AutoBattle
             switch (characterClass)
             {
                 case CharacterClass.Paladin: // increases paladins' health
-                    Console.WriteLine($"{characterClass} uses {SpecialAbility.abilityName}. They gain a boost of health now they have {Health}HP!");
-                    Health *= SpecialAbility.hpModifier;
+                    Console.WriteLine($"{characterClass} uses {specialAbility.abilityName}. They gain a boost of health and now have {Health} HP!");
+                    Health = (int) (Health * specialAbility.hpModifier);
                     break;
                 case CharacterClass.Warrior: // attacks twice with more damage
-                    Console.WriteLine($"{characterClass} uses {SpecialAbility.abilityName}.They grow stronger and attacks twice!");
-                    float originalBaseDamage = BaseDamage;
-                    BaseDamage *= SpecialAbility.damageModifier;
+                    Console.WriteLine($"{characterClass} uses {specialAbility.abilityName}. They grow stronger and attacks twice!");
+                    int originalBaseDamage = Damage;
+                    Damage = (int) (Damage * specialAbility.damageModifier);
                     Attack(Target);
                     Attack(Target);
-                    BaseDamage = originalBaseDamage;
+                    Damage = originalBaseDamage;
                     break;
                 case CharacterClass.Cleric: // turns invulnerable for a set amount of turns
                     if (Invulnerable) break;
-                    Console.WriteLine($"{characterClass} uses {SpecialAbility.abilityName}. They become invulnerable for {SpecialAbility.turnsActive} turns!");
+                    Console.WriteLine($"{characterClass} uses {specialAbility.abilityName}. They become invulnerable for {specialAbility.turnsActive} turns!");
                     Invulnerable = true;
-                    SpecialAbility.turnsCountDown = SpecialAbility.turnsActive;
+                    specialAbility.turnsCountDown = specialAbility.turnsActive;
                     break;
                 case CharacterClass.Archer: // attack anywhere
-                    Console.WriteLine($"{characterClass} uses {SpecialAbility.abilityName}. They attack from a distance!");
+                    Console.WriteLine($"{characterClass} uses {specialAbility.abilityName}. They attack from a distance!");
                     Attack(Target);
                     break;
                 default:

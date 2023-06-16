@@ -15,7 +15,6 @@ namespace AutoBattle
         {
             xLength = Columns;
             yLength = Lines;
-            Console.WriteLine("The battle field has been created\n");
 
             for (int i = 0; i < Lines; i++)
             {
@@ -23,7 +22,6 @@ namespace AutoBattle
                 {
                     GridBox newBox = new GridBox(j, i, false, (i * Columns + j), '\0');
                     grids.Add(newBox);
-                    Console.Write($"{newBox.Index}\n");
                 }
             }
         }
@@ -31,7 +29,9 @@ namespace AutoBattle
         // prints the matrix that indicates the tiles of the battlefield
         public void drawBattlefield()
         {
-            for(int i = 0; i < yLength; i++)
+            Console.Write(Environment.NewLine + Environment.NewLine);
+
+            for (int i = 0; i < yLength; i++)
             {
                 for(int j = 0; j < xLength; j++)
                 {
@@ -50,7 +50,7 @@ namespace AutoBattle
                 }
                 Console.Write(Environment.NewLine + Environment.NewLine);
             }
-            Console.Write(Environment.NewLine + Environment.NewLine);
+            //Console.Write(Environment.NewLine + Environment.NewLine);
         }
     }
 }

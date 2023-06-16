@@ -6,6 +6,7 @@ using System.Linq;
 using static AutoBattle.Types;
 using System.Text.RegularExpressions;
 using System.Runtime.CompilerServices;
+using static AutoBattle.Types.SpecialAbility;
 
 namespace AutoBattle
 {
@@ -14,12 +15,11 @@ namespace AutoBattle
         static void Main(string[] args)
         {
             Grid grid;
-            CharacterClass playerCharacterClass;
-            GridBox PlayerCurrentLocation;
             GridBox EnemyCurrentLocation;
             Character PlayerCharacter;
             Character EnemyCharacter;
             List<Character> AllPlayers;
+            Dictionary<CharacterClass, CharacterClassSpecific> classesDictionary;
             Utilities utilities = new Utilities();
             int currentTurn = 0;
             int numberOfPossibleTiles = 0;
@@ -29,7 +29,54 @@ namespace AutoBattle
             void Setup()
             {
                 AllPlayers = new List<Character>();
+
+                InitializeClasses();
                 GetBattlefieldSize();
+            }
+
+            // Initializes the CharacterClassSpecific dictionary
+            void InitializeClasses()
+            {
+                CharacterClassSpecific paladinClass = new CharacterClassSpecific()
+                {
+                    characterClass = CharacterClass.Paladin,
+                    hpModifier = 1.8f,
+                    damageModifier = 1f,
+                    specialAbility = new SpecialAbility(CharacterClass.Paladin),
+                };
+
+                CharacterClassSpecific warriorClass = new CharacterClassSpecific()
+                {
+                    characterClass = CharacterClass.Warrior,
+                    hpModifier = 1.2f,
+                    damageModifier = 1.9f,
+                    specialAbility = new SpecialAbility(CharacterClass.Warrior),
+                };
+
+                CharacterClassSpecific clericClass = new CharacterClassSpecific()
+                {
+                    characterClass = CharacterClass.Cleric,
+                    hpModifier = 1f,
+                    damageModifier = 1.2f,
+                    specialAbility = new SpecialAbility(CharacterClass.Cleric),
+                };
+
+                CharacterClassSpecific archerClass = new CharacterClassSpecific()
+                {
+                    characterClass = CharacterClass.Archer,
+                    hpModifier = 1f,
+                    damageModifier = 1.5f,
+                    specialAbility = new SpecialAbility(CharacterClass.Archer),
+                };
+
+                classesDictionary = new Dictionary<CharacterClass, CharacterClassSpecific>()
+                {
+                    { CharacterClass.Paladin, paladinClass},
+                    { CharacterClass.Warrior, warriorClass},
+                    { CharacterClass.Cleric, clericClass},
+                    { CharacterClass.Archer, archerClass},
+                };
+
             }
 
             // Gets from the player the size of the battlefield and creates it before asking about character choice
@@ -47,9 +94,6 @@ namespace AutoBattle
                 // Checks if the choice is valid before attempting to create the grid
                 if (match.Success)
                 {
-                    Console.WriteLine(match.Groups[1].Value);
-                    Console.WriteLine(match.Groups[2].Value);
-
                     int xLength = int.Parse(match.Groups[1].Value);
                     int yLength = int.Parse(match.Groups[2].Value);
 
@@ -66,6 +110,9 @@ namespace AutoBattle
             void CreateGrid(int xLength, int yLength)
             {
                 grid = new Grid(yLength, xLength);
+
+                Console.WriteLine("The battle field has been created\n");
+
                 numberOfPossibleTiles = grid.grids.Count;
             }
 
@@ -109,26 +156,24 @@ namespace AutoBattle
             void CreatePlayerCharacter(int classIndex)
             {
                 CharacterClass characterClass = (CharacterClass)classIndex;
+
                 Console.WriteLine($"Player Class Choice: {characterClass}");
-                PlayerCharacter = new Character(characterClass);
-                PlayerCharacter.Title = "Player";
-                PlayerCharacter.Health = 100;
-                PlayerCharacter.BaseDamage = 20;
+
+                PlayerCharacter = new Character(characterClass, "Player", 100, 20, classesDictionary[characterClass]);
+
                 PlayerCharacter.PlayerIndex = 0;
-
-
             }
 
             void CreateEnemyCharacter()
             {
                 //randomly choose the enemy class and set up vital variables
-                int randomInteger = Utilities.GetRandomInt(1, 4); // swapped use of random.next to the method already implemented
+                int randomInteger = Utilities.GetRandomInt(1, 5); // swapped use of random.next to the method already implemented
                 CharacterClass enemyClass = (CharacterClass)randomInteger;
+
                 Console.WriteLine($"Enemy Class Choice: {enemyClass}");
-                EnemyCharacter = new Character(enemyClass);
-                EnemyCharacter.Title = "Enemy";
-                EnemyCharacter.Health = 100;
-                EnemyCharacter.BaseDamage = 20;
+
+                EnemyCharacter = new Character(enemyClass, "Enemy", 100, 20, classesDictionary[enemyClass]);
+
                 EnemyCharacter.PlayerIndex = 1;
             }
 
@@ -137,20 +182,33 @@ namespace AutoBattle
                 //populates the character variables and targets
                 EnemyCharacter.Target = PlayerCharacter;
                 PlayerCharacter.Target = EnemyCharacter;
+
                 AllPlayers.Add(PlayerCharacter);
                 AllPlayers.Add(EnemyCharacter);
+
                 AlocatePlayers();
-                StartTurn();
+                HandleTurn();
 
             }
 
             void StartTurn()
             {
+                // It could be a good idea to clear the console every turn instead of maintaining past rounds
+                //Console.Clear();
+
+                Console.WriteLine("---------------------------------------------------------------------------------------------------------------------");
 
                 if (currentTurn == 0)
                 {
                     ShufflePlayerList(AllPlayers); // Swapped sorted list for shuffled list for more dynamism
                 }
+
+                foreach(Character character in AllPlayers)
+                {
+                    character.DisplayCharacterStats();
+                }
+
+                Console.WriteLine(Environment.NewLine);
 
                 foreach (Character character in AllPlayers)
                 {
@@ -169,9 +227,8 @@ namespace AutoBattle
 
             void HandleTurn()
             {
-
                 Console.Write(Environment.NewLine + Environment.NewLine);
-                Console.WriteLine("Click on any key to start the next turn...\n");
+                Console.WriteLine("Press any key to start the next turn...\n");
                 Console.Write(Environment.NewLine + Environment.NewLine);
 
                 ConsoleKeyInfo key = Console.ReadKey();
@@ -241,7 +298,7 @@ namespace AutoBattle
                 int random = Utilities.GetRandomInt(0, grid.xLength * grid.yLength);
 
                 GridBox RandomLocation = (grid.grids.ElementAt(random));
-                Console.Write($"{random}\n");
+
                 if (!RandomLocation.ocupied)
                 {
                     GridBox PlayerCurrentLocation = RandomLocation;
@@ -261,17 +318,16 @@ namespace AutoBattle
             {
                 int random = Utilities.GetRandomInt(0, grid.xLength * grid.yLength);
                 GridBox RandomLocation = (grid.grids.ElementAt(random));
-                Console.Write($"{random}\n");
+
                 if (!RandomLocation.ocupied)
                 {
                     EnemyCurrentLocation = RandomLocation;
                     RandomLocation.ocupied = true;
                     RandomLocation.occupyingCharacter = EnemyCharacter.characterClass.ToString()[0];
                     grid.grids[random] = RandomLocation;
-                    //EnemyCharacter.currentBox = grid.grids[random];
                     EnemyCharacter.currentBox = RandomLocation;
 
-                    //changed the hardcored values to the size of grids
+                    //changed the hardcoded values to the size of grids
                     grid.drawBattlefield();
                 }
                 else
