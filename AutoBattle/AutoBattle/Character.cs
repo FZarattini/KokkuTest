@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Linq;
 using static AutoBattle.Types;
+using System.Security.Cryptography.X509Certificates;
 
 namespace AutoBattle
 {
@@ -75,21 +76,25 @@ namespace AutoBattle
 
         // Check in x and y directions if there is any character close enough to be a target.
         // Modified to detect characters in diagonal directions and to check positions based on x and y indexes instead of the index of the box. More reliable this way
-        // Maintained linq even at cost of performance for legibility. Swap for loop if performance issues arise
 
         bool CheckCloseTargets(Grid battlefield)
         {
-            bool west = battlefield.grids.Find(x => x.xIndex == currentBox.xIndex - 1 && x.yIndex == currentBox.yIndex).ocupied;
-            bool east = battlefield.grids.Find(x => x.xIndex == currentBox.xIndex + 1 && x.yIndex == currentBox.yIndex).ocupied;
-            bool north = battlefield.grids.Find(x => x.yIndex == currentBox.yIndex + 1 && x.xIndex == currentBox.xIndex).ocupied;
-            bool south = battlefield.grids.Find(x => x.yIndex == currentBox.yIndex - 1 && x.xIndex == currentBox.xIndex).ocupied;
-            bool northWest = battlefield.grids.Find(x => x.xIndex == currentBox.xIndex - 1 && x.yIndex == currentBox.yIndex - 1).ocupied;
-            bool northEast = battlefield.grids.Find(x => x.xIndex == currentBox.xIndex + 1 && x.yIndex == currentBox.yIndex - 1).ocupied;
-            bool southWest = battlefield.grids.Find(x => x.xIndex == currentBox.xIndex - 1 && x.yIndex == currentBox.yIndex + 1).ocupied;
-            bool southEast = battlefield.grids.Find(x => x.xIndex == currentBox.xIndex + 1 && x.yIndex == currentBox.yIndex + 1).ocupied;
+            foreach(GridBox g in battlefield.grids)
+            {
+                if (((g.xIndex == currentBox.xIndex - 1 && g.yIndex == currentBox.yIndex) ||
+                    (g.xIndex == currentBox.xIndex + 1 && g.yIndex == currentBox.yIndex) ||
+                    (g.yIndex == currentBox.yIndex + 1 && g.xIndex == currentBox.xIndex) ||
+                    (g.yIndex == currentBox.yIndex - 1 && g.xIndex == currentBox.xIndex) ||
+                    (g.xIndex == currentBox.xIndex - 1 && g.yIndex == currentBox.yIndex - 1) ||
+                    (g.xIndex == currentBox.xIndex + 1 && g.yIndex == currentBox.yIndex - 1) ||
+                    (g.xIndex == currentBox.xIndex - 1 && g.yIndex == currentBox.yIndex + 1) ||
+                    (g.xIndex == currentBox.xIndex + 1 && g.yIndex == currentBox.yIndex + 1)) && 
+                    g.ocupied)
+                    
+                    return true;
+            }
 
-            return west || east || north || south || northWest || northEast || southWest || southEast;
- 
+            return false;
         }
 
         #region Movement Methods
