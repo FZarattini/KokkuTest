@@ -193,7 +193,7 @@ namespace AutoBattle
 
             void StartTurn()
             {
-                // It could be a good idea to clear the console every turn instead of maintaining past rounds
+                // Might be a good idea to clear the console every turn instead of maintaining past rounds
                 //Console.Clear();
 
                 Console.WriteLine("---------------------------------------------------------------------------------------------------------------------");

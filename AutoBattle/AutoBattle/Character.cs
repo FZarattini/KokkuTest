@@ -37,10 +37,9 @@ namespace AutoBattle
 
         public void StartTurn(Grid battlefield)
         {
-            //DisplayCharacterStats();
-            
             // Archer special ability allows for attacks anywhere, so must be rolled before everything else
-            if (characterClass == CharacterClass.Archer)
+
+            if (characterClass == CharacterClass.Archer && !CheckCloseTargets(battlefield))
             {
                 bool success = TrySpecialAbility();
 
@@ -48,7 +47,7 @@ namespace AutoBattle
                     return;
             }
 
-            CheckSpecialAbilityStatus(); // Make sure there isn't a timed ability that needs to reset
+            CheckSpecialAbilityRemainingTurns(); // Checks for abilities that need to reset
 
             if (CheckCloseTargets(battlefield))
             {
@@ -76,6 +75,8 @@ namespace AutoBattle
 
         // Check in x and y directions if there is any character close enough to be a target.
         // Modified to detect characters in diagonal directions and to check positions based on x and y indexes instead of the index of the box. More reliable this way
+        // Maintained linq even at cost of performance for legibility. Swap for loop if performance issues arise
+
         bool CheckCloseTargets(Grid battlefield)
         {
             bool west = battlefield.grids.Find(x => x.xIndex == currentBox.xIndex - 1 && x.yIndex == currentBox.yIndex).ocupied;
@@ -172,7 +173,7 @@ namespace AutoBattle
                     }
                     else
                     {
-                        Console.WriteLine($"{Title} {characterClass} walked north!");
+                        Console.WriteLine($"{Title} {characterClass} walked north!\n");
                         return;
                     }
                 case false:
@@ -181,28 +182,28 @@ namespace AutoBattle
                         case true:
                             if (left)
                             {
-                                Console.WriteLine($"{Title} {characterClass} walked southwest!");
+                                Console.WriteLine($"{Title} {characterClass} walked southwest!\n");
                                 return;
                             }
                             else if (right)
                             {
-                                Console.WriteLine($"{Title} {characterClass} walked southeast!");
+                                Console.WriteLine($"{Title} {characterClass} walked southeast!\n");
                                 return;
                             }
                             else
                             {
-                                Console.WriteLine($"{Title} {characterClass} walked south!");
+                                Console.WriteLine($"{Title} {characterClass} walked south!\n");
                                 return;
                             }
                         case false:
                             if (left)
                             {
-                                Console.WriteLine($"{Title} {characterClass} walked west!");
+                                Console.WriteLine($"{Title} {characterClass} walked west!\n");
                                 return;
                             }
                             else if (right)
                             {
-                                Console.WriteLine($"{Title} {characterClass} walked east!");
+                                Console.WriteLine($"{Title} {characterClass} walked east!\n");
                                 return;
                             }
                             break;
@@ -225,7 +226,7 @@ namespace AutoBattle
         }
 
         // Checks abilities with set amount of turns to end and resets them if needed
-        void CheckSpecialAbilityStatus()
+        void CheckSpecialAbilityRemainingTurns()
         {
             if (characterClass == CharacterClass.Cleric)
             {
@@ -249,7 +250,7 @@ namespace AutoBattle
         {
             if (Invulnerable)
             {
-                Console.WriteLine($"{characterClass} took 0 damage because they are invulnerable!");
+                Console.WriteLine($"{characterClass} took 0 damage because they are invulnerable!\n");
                 return;
             }
 
@@ -257,7 +258,7 @@ namespace AutoBattle
 
             if (Health <= 0)
             {
-                Console.WriteLine($"{characterClass} died!");
+                Console.WriteLine($"{characterClass} died!\n");
                 onCharacterDied?.Invoke();
             }
         }
@@ -265,9 +266,9 @@ namespace AutoBattle
         // Rolls a random chance to execute a special ability based on the own ability's odds of happening
         bool TrySpecialAbility()
         {
-            float rolled = Utilities.GetRandomFloat(0f, 1f);
+            float rolledValue = Utilities.GetRandomFloat(0f, 1f);
 
-            if (rolled <= specialAbility.odds)
+            if (rolledValue <= specialAbility.odds)
             {
                 ExecuteSpecialAbility();
                 return true;
@@ -275,17 +276,17 @@ namespace AutoBattle
             return false;
         }
 
-        // Executes the class special ability;
+        // Executes the class special ability
         void ExecuteSpecialAbility()
         {
             switch (characterClass)
             {
                 case CharacterClass.Paladin: // increases paladins' health
-                    Console.WriteLine($"{characterClass} uses {specialAbility.abilityName}. They gain a boost of health and now have {Health} HP!");
+                    Console.WriteLine($"{characterClass} uses {specialAbility.abilityName}. They gain a boost of health and now have {Health} HP!\n");
                     Health = (int) (Health * specialAbility.hpModifier);
                     break;
                 case CharacterClass.Warrior: // attacks twice with more damage
-                    Console.WriteLine($"{characterClass} uses {specialAbility.abilityName}. They grow stronger and attacks twice!");
+                    Console.WriteLine($"{characterClass} uses {specialAbility.abilityName}. They grow stronger and attacks twice!\n");
                     int originalBaseDamage = Damage;
                     Damage = (int) (Damage * specialAbility.damageModifier);
                     Attack(Target);
@@ -294,12 +295,12 @@ namespace AutoBattle
                     break;
                 case CharacterClass.Cleric: // turns invulnerable for a set amount of turns
                     if (Invulnerable) break;
-                    Console.WriteLine($"{characterClass} uses {specialAbility.abilityName}. They become invulnerable for {specialAbility.turnsActive} turns!");
+                    Console.WriteLine($"{characterClass} uses {specialAbility.abilityName}. They become invulnerable for {specialAbility.turnsActive} turns!\n");
                     Invulnerable = true;
                     specialAbility.turnsCountDown = specialAbility.turnsActive;
                     break;
                 case CharacterClass.Archer: // attack anywhere
-                    Console.WriteLine($"{characterClass} uses {specialAbility.abilityName}. They attack from a distance!");
+                    Console.WriteLine($"{characterClass} uses {specialAbility.abilityName}. They attack from a distance!\n");
                     Attack(Target);
                     break;
                 default:
